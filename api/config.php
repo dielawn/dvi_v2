@@ -15,7 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 $host = 'localhost';
 $db_name = 'dillonwe_dvi_app'; // The database name you created
 $username = 'dillonwe_dinoarmy'; // The username from MySQL Database Wizard
-$password = 'yxzIcGJ5yRhGyK'; // The password you set
+$password = ''; // The password you set
 
 try {
     $conn = new PDO("mysql:host=$host;dbname=$db_name", $username, $password);

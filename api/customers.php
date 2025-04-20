@@ -1,5 +1,5 @@
-// api/customers.php
 <?php
+// api/customers.php
 require_once 'config.php';
 
 $request_method = $_SERVER['REQUEST_METHOD'];
@@ -98,11 +98,10 @@ function createCustomer($data) {
             foreach($data['vehicles'] as $vehicle) {
                 $vehicleQuery = "INSERT INTO vehicles (
                     customer_id, make, model, year, vin, 
-                    plate, state, engine,
+                    plate, state, engine
                 ) VALUES (
                     ?, ?, ?, ?, ?, 
-                    ?, ?, ?, ?, 
-                    ?, ?
+                    ?, ?, ?
                 )";
                 $vehicleStmt = $conn->prepare($vehicleQuery);
                 $vehicleStmt->execute([
@@ -129,7 +128,4 @@ function createCustomer($data) {
         echo json_encode(['error' => 'Failed to create customer: ' . $e->getMessage()]);
     }
 }
-
-
 ?>
-// Inside your createCustomer function in customers.php

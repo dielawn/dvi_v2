@@ -14,10 +14,114 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 // Database connection
-require_once 'db_connect.php'; // Adjust if your connection file is named differently
+require_once 'config.php';
 
-// Get database connection
-$conn = getConnection();
+// POST request - Create a new inspection
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    // Get request body
+    $data = json_decode(file_get_contents('php://input'), true);
+    
+    // Log the received data for debugging
+    error_log('Received data: ' . print_r($data, true));
+    
+    // Validate required fields
+    if (!isset($data['id']) || !isset($data['vehicleId']) || !isset($data['technicianId']) || !isset($data['items'])) {
+        http_response_code(400);
+        echo json_encode([
+            "error" => "Missing required fields",
+            "received" => $data,
+            "required" => ["id", "vehicleId", "technicianId", "items"]
+        ]);
+        exit();
+    }
+    
+    // Extract data from request
+    $id = $data['id'];
+    $vehicleId = $data['vehicleId'];
+    $technicianId = $data['technicianId'];
+    $date = isset($data['date']) ? $data['date'] : date('Y-m-d H:i:s');
+    $workOrder = isset($data['workOrder']) ? $data['workOrder'] : null;
+    
+    // Log the extracted data
+    error_log('Extracted data - ID: ' . $id . ', Vehicle ID: ' . $vehicleId . ', Technician ID: ' . $technicianId . ', Date: ' . $date);
+    
+    // Convert items array to JSON string for storage
+    $items = json_encode($data['items']);
+    
+    // Check if your database table has these columns
+    // inspections table should have: id, vehicle_id, technician_id, date, work_order, items
+    // If they're named differently, adjust the query below
+    
+    try {
+        // First, let's check if an inspection with this ID already exists
+        $checkSql = "SELECT COUNT(*) FROM inspections WHERE id = ?";
+        $checkStmt = $conn->prepare($checkSql);
+        $checkStmt->execute([$id]);
+        $count = $checkStmt->fetchColumn();
+        
+        if ($count > 0) {
+            // Update existing inspection
+            $sql = "UPDATE inspections SET 
+                    vehicle_id = ?, 
+                    technician_id = ?, 
+                    date = ?, 
+                    work_order = ?, 
+                    items = ? 
+                    WHERE id = ?";
+            $stmt = $conn->prepare($sql);
+            $result = $stmt->execute([$vehicleId, $technicianId, $date, $workOrder, $items, $id]);
+            $message = "Inspection updated successfully";
+        } else {
+            // Insert new inspection
+            $sql = "INSERT INTO inspections (id, vehicle_id, technician_id, date, work_order, items) 
+                    VALUES (?, ?, ?, ?, ?, ?)";
+            $stmt = $conn->prepare($sql);
+            $result = $stmt->execute([$id, $vehicleId, $technicianId, $date, $workOrder, $items]);
+            $message = "Inspection created successfully";
+        }
+        
+        if ($result) {
+            // Return success response
+            echo json_encode([
+                "success" => true,
+                "message" => $message,
+                "id" => $id
+            ]);
+        } else {
+            throw new Exception('Execute failed');
+        }
+    } catch (PDOException $e) {
+        // Return detailed error response for debugging
+        http_response_code(500);
+        $errorInfo = $stmt ? $stmt->errorInfo() : null;
+        echo json_encode([
+            "success" => false,
+            "message" => "Failed to save inspection",
+            "error" => $e->getMessage(),
+            "code" => $e->getCode(),
+            "sql_error" => $errorInfo,
+            "sql" => $sql ?? null,
+            "params" => [$id, $vehicleId, $technicianId, $date, $workOrder, $items]
+        ]);
+        
+        // Log the error
+        error_log('Database error: ' . $e->getMessage());
+        error_log('SQL: ' . ($sql ?? 'N/A'));
+        error_log('Params: ' . print_r([$id, $vehicleId, $technicianId, $date, $workOrder, $items], true));
+    } catch (Exception $e) {
+        // Return generic error response
+        http_response_code(500);
+        echo json_encode([
+            "success" => false,
+            "message" => "Failed to save inspection",
+            "error" => $e->getMessage()
+        ]);
+        
+        // Log the error
+        error_log('Error: ' . $e->getMessage());
+    }
+    exit();
+}
 
 // GET request - Retrieve inspections
 if ($_SERVER['REQUEST_METHOD'] === 'GET') {
@@ -28,16 +132,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Prepare SQL query to get inspections for a specific vehicle
         $sql = "SELECT * FROM inspections WHERE vehicle_id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $vehicleId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$vehicleId]);
         
         // Fetch all inspections
-        $inspections = [];
-        while ($row = $result->fetch_assoc()) {
-            // Convert stored JSON items back to an array
-            $row['items'] = json_decode($row['items'], true);
-            $inspections[] = $row;
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Convert stored JSON items back to an array for each inspection
+        foreach ($inspections as &$inspection) {
+            $inspection['items'] = json_decode($inspection['items'], true);
         }
         
         // Return inspections as JSON
@@ -50,12 +152,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         // Prepare SQL query to get a specific inspection
         $sql = "SELECT * FROM inspections WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $inspectionId);
-        $stmt->execute();
-        $result = $stmt->get_result();
+        $stmt->execute([$inspectionId]);
         
-        if ($result->num_rows > 0) {
-            $inspection = $result->fetch_assoc();
+        if ($stmt->rowCount() > 0) {
+            $inspection = $stmt->fetch(PDO::FETCH_ASSOC);
             // Convert stored JSON items back to an array
             $inspection['items'] = json_decode($inspection['items'], true);
             echo json_encode($inspection);
@@ -70,70 +170,23 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET') {
         $sql = "SELECT * FROM inspections ORDER BY date DESC";
         $stmt = $conn->prepare($sql);
         $stmt->execute();
-        $result = $stmt->get_result();
         
         // Fetch all inspections
-        $inspections = [];
-        while ($row = $result->fetch_assoc()) {
-            // Convert stored JSON items back to an array
-            $row['items'] = json_decode($row['items'], true);
-            $inspections[] = $row;
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Convert stored JSON items back to an array for each inspection
+        foreach ($inspections as &$inspection) {
+            $inspection['items'] = json_decode($inspection['items'], true);
         }
         
         // Return inspections as JSON
         echo json_encode($inspections);
     }
-}
-
-// POST request - Create a new inspection
-else if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    // Get request body
-    $data = json_decode(file_get_contents('php://input'), true);
-    
-    // Validate required fields
-    if (!isset($data['id']) || !isset($data['vehicleId']) || !isset($data['technicianId']) || !isset($data['items'])) {
-        http_response_code(400);
-        echo json_encode(["error" => "Missing required fields"]);
-        exit();
-    }
-    
-    // Extract data from request
-    $id = $data['id'];
-    $vehicleId = $data['vehicleId'];
-    $technicianId = $data['technicianId'];
-    $date = isset($data['date']) ? $data['date'] : date('Y-m-d H:i:s');
-    $workOrder = isset($data['workOrder']) ? $data['workOrder'] : null;
-    
-    // Convert items array to JSON string for storage
-    $items = json_encode($data['items']);
-    
-    // Prepare SQL insert statement
-    $sql = "INSERT INTO inspections (id, vehicle_id, technician_id, date, work_order, items) 
-            VALUES (?, ?, ?, ?, ?, ?)";
-    $stmt = $conn->prepare($sql);
-    $stmt->bind_param("ssssss", $id, $vehicleId, $technicianId, $date, $workOrder, $items);
-    
-    // Execute query
-    if ($stmt->execute()) {
-        // Return success response
-        echo json_encode([
-            "success" => true,
-            "message" => "Inspection created successfully",
-            "id" => $id
-        ]);
-    } else {
-        // Return error response
-        http_response_code(500);
-        echo json_encode([
-            "success" => false,
-            "message" => "Failed to create inspection",
-            "error" => $conn->error
-        ]);
-    }
+    exit();
 }
 
 // PUT request - Update an existing inspection
-else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
+if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     // Get request body
     $data = json_decode(file_get_contents('php://input'), true);
     
@@ -150,11 +203,9 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     // Check if inspection exists
     $checkSql = "SELECT id FROM inspections WHERE id = ?";
     $checkStmt = $conn->prepare($checkSql);
-    $checkStmt->bind_param("s", $id);
-    $checkStmt->execute();
-    $checkResult = $checkStmt->get_result();
+    $checkStmt->execute([$id]);
     
-    if ($checkResult->num_rows === 0) {
+    if ($checkStmt->rowCount() === 0) {
         http_response_code(404);
         echo json_encode(["error" => "Inspection not found"]);
         exit();
@@ -162,24 +213,20 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     
     // Build update SQL based on provided fields
     $updateFields = [];
-    $types = "";
     $params = [];
     
     if (isset($data['technicianId'])) {
         $updateFields[] = "technician_id = ?";
-        $types .= "s";
         $params[] = $data['technicianId'];
     }
     
     if (isset($data['workOrder'])) {
         $updateFields[] = "work_order = ?";
-        $types .= "s";
         $params[] = $data['workOrder'];
     }
     
     if (isset($data['items'])) {
         $updateFields[] = "items = ?";
-        $types .= "s";
         $params[] = json_encode($data['items']);
     }
     
@@ -191,19 +238,14 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     }
     
     // Add ID parameter for WHERE clause
-    $types .= "s";
     $params[] = $id;
     
     // Prepare SQL update statement
     $sql = "UPDATE inspections SET " . implode(", ", $updateFields) . " WHERE id = ?";
     $stmt = $conn->prepare($sql);
     
-    // Dynamically bind parameters
-    $bindParams = array_merge([$stmt, $types], $params);
-    call_user_func_array('mysqli_stmt_bind_param', $bindParams);
-    
     // Execute query
-    if ($stmt->execute()) {
+    if ($stmt->execute($params)) {
         // Return success response
         echo json_encode([
             "success" => true,
@@ -213,16 +255,18 @@ else if ($_SERVER['REQUEST_METHOD'] === 'PUT') {
     } else {
         // Return error response
         http_response_code(500);
+        $error = $stmt->errorInfo();
         echo json_encode([
             "success" => false,
             "message" => "Failed to update inspection",
-            "error" => $conn->error
+            "error" => $error[2]
         ]);
     }
+    exit();
 }
 
 // DELETE request - Remove an inspection
-else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
+if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
     // Check if inspection ID is provided
     if (isset($_GET['id'])) {
         $id = $_GET['id'];
@@ -230,10 +274,9 @@ else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         // Prepare SQL delete statement
         $sql = "DELETE FROM inspections WHERE id = ?";
         $stmt = $conn->prepare($sql);
-        $stmt->bind_param("s", $id);
         
         // Execute query
-        if ($stmt->execute()) {
+        if ($stmt->execute([$id])) {
             // Return success response
             echo json_encode([
                 "success" => true,
@@ -242,24 +285,23 @@ else if ($_SERVER['REQUEST_METHOD'] === 'DELETE') {
         } else {
             // Return error response
             http_response_code(500);
+            $error = $stmt->errorInfo();
             echo json_encode([
                 "success" => false,
                 "message" => "Failed to delete inspection",
-                "error" => $conn->error
+                "error" => $error[2]
             ]);
         }
     } else {
         http_response_code(400);
         echo json_encode(["error" => "Missing inspection ID"]);
     }
+    exit();
 }
 
 // Invalid request method
-else {
-    http_response_code(405);
-    echo json_encode(["error" => "Method not allowed"]);
-}
+http_response_code(405);
+echo json_encode(["error" => "Method not allowed"]);
 
-// Close database connection
-$conn->close();
+// Connection is managed by the PDO object in config.php
 ?>
