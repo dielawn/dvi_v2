@@ -1,0 +1,172 @@
+/* Main form styling */
+.inspection-form-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #f9f9f9;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+  
+  .customer-form {
+    margin-bottom: 30px;
+    padding: 20px;
+    background-color: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  .customer-form h2,
+  .customer-form h3,
+  .customer-form h4 {
+    color: #333;
+    margin-bottom: 15px;
+  }
+  
+  .form-group {
+    margin-bottom: 15px;
+  }
+  
+  .form-group label {
+    display: block;
+    margin-bottom: 5px;
+    font-weight: 600;
+    color: #555;
+  }
+  
+  .form-group input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+  }
+  
+  /* Form row for organizing fields horizontally */
+  .form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    margin-bottom: 15px;
+  }
+  
+  .form-row .form-group {
+    flex: 1 1 200px;
+    margin-bottom: 0;
+  }
+  
+  /* Vehicle container styling */
+  .vehicle-container {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #fff;
+    border-radius: 6px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  }
+  
+  .vehicle-actions {
+    display: flex;
+    margin: 15px 0;
+    gap: 10px;
+  }
+  
+  .form-actions {
+    margin-top: 30px;
+    text-align: center;
+  }
+  
+  .vehicle-form {
+    margin-bottom: 10px;
+  }
+  
+  .vehicle-preview {
+    margin-top: 15px;
+    padding: 10px;
+    background-color: #f0f8ff;
+    border-left: 3px solid #4a90e2;
+    border-radius: 3px;
+    font-size: 14px;
+  }
+  
+  /* Button styling */
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    font-size: 16px;
+    cursor: pointer;
+    margin-right: 10px;
+    margin-bottom: 10px;
+  }
+  
+  .add-btn {
+    background-color: #5cb85c;
+    color: white;
+  }
+  
+  .submit-btn {
+    background-color: #337ab7;
+    color: white;
+    font-weight: bold;
+  }
+  
+  .remove-btn {
+    background-color: #d9534f;
+    color: white;
+  }
+  
+  /* Message styling */
+  .success-message,
+  .error-message {
+    padding: 10px 15px;
+    margin-bottom: 20px;
+    border-radius: 4px;
+    font-weight: 500;
+  }
+  
+  .success-message {
+    background-color: #dff0d8;
+    border: 1px solid #d6e9c6;
+    color: #3c763d;
+  }
+  
+  .error-message {
+    background-color: #f2dede;
+    border: 1px solid #ebccd1;
+    color: #a94442;
+  }
+  
+  hr {
+    margin: 20px 0;
+    border: 0;
+    height: 1px;
+    background-color: #eee;
+  }
+
+/* Radio button entry method styling */
+.entry-method-options {
+    display: flex;
+    flex-direction: row;
+    gap: 20px;
+    align-items: center;
+    margin-top: 5px;
+  }
+  
+  .entry-method-options label {
+    display: flex;
+    align-items: center;
+    font-weight: normal;
+    margin-bottom: 0;
+    cursor: pointer;
+  }
+  
+  .entry-method-options input[type="radio"] {
+    width: auto;
+    margin-right: 6px;
+  }
+
+  input {
+   
+    margin-right: 6px;
+    max-width: 175px;
+  }
