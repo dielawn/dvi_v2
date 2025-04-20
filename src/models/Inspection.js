@@ -1,7 +1,7 @@
 import { v4 as uuidv4 } from 'uuid';
 
 class Inspection {
-    constructor(vehicleId, technicianId, id = uuidv4()) {
+    constructor(vehicleId, technicianId, id = uuidv4(), workOrder) {
         this.id = id;
         this.vehicleId = vehicleId;
         this.technicianId = technicianId;
@@ -27,6 +27,7 @@ class Inspection {
             
         ];
         this.items = [];
+        this.workOrder = workOrder;
         
         // Initialize with default items if none provided
         if (this.items.length === 0) {
@@ -144,6 +145,7 @@ class Inspection {
             technicianId: this.technicianId,
             date: this.date,
             items: this.items.map(item => item.toJSON()),
+            workOrder: this.workOrder
         };
     }
     
@@ -152,6 +154,7 @@ class Inspection {
             json.vehicleId,
             json.technicianId,
             json.id,
+            json.workOrder
         );
         
         // Override the default date
