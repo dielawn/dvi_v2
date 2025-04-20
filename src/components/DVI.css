@@ -144,3 +144,40 @@
     border: 1px solid #ebccd1;
     color: #a94442;
 }
+
+/* Add these to your DVI.css file */
+
+.technician-form {
+    background-color: #f5f5f5;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.technician-form .form-group {
+    margin-bottom: 15px;
+}
+
+.technician-form input {
+    width: 150px;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 16px;
+    text-transform: uppercase;
+}
+
+.start-btn {
+    background-color: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.start-btn:hover {
+    background-color: #45a049;
+}

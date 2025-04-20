@@ -131,7 +131,50 @@ class DatabaseService {
           throw error;
         }
       }
+
+      // Add to DatabaseService.js
+
+// Save an inspection
+    async saveInspection(inspection) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/inspections.php`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(inspection),
+        });
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Saved inspection:', data);
+        return data;
+      } catch (error) {
+        console.error('Error saving inspection:', error);
+        throw error;
+      }
     }
+
+    // Get inspections for a vehicle
+    async getVehicleInspections(vehicleId) {
+      try {
+        const response = await fetch(`${this.apiBaseUrl}/inspections.php?vehicleId=${vehicleId}`);
+        if (!response.ok) {
+          throw new Error(`HTTP error ${response.status}`);
+        }
+        const data = await response.json();
+        console.log('Fetched vehicle inspections:', data);
+        return data;
+      } catch (error) {
+        console.error('Error fetching vehicle inspections:', error);
+        throw error;
+      }
+    }
+    
+    }
+
+    
     
     export default DatabaseService;
     

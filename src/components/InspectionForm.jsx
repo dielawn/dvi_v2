@@ -1,14 +1,16 @@
+// src/components/InspectionForm.jsx
 import React, { useEffect, useState } from 'react';
 import DatabaseService from '../services/DatabaseService';
 import CustomerForm from './CustomerForm';
 import VehicleForm from './VehicleForm';
 import Vehicle from '../models/Vehicle';
 
-const InspectionForm = () => {
+const InspectionForm = ({ startInspection }) => {
     const [name, setName] = useState('');
     const [selectedCustomer, setSelectedCustomer] = useState('');
     const [vehicles, setVehicles] = useState([new Vehicle(null, {})]);
     const [message, setMessage] = useState('');
+    const [workOrderNumber, setWorkOrderNumber] = useState('');
 
     const dbService = new DatabaseService();
 
@@ -18,6 +20,24 @@ const InspectionForm = () => {
         }        
     }, [vehicles])
 
+    const handleInspectVehicle = (vehicle) => {
+        if (!vehicle.hasIdentifier()) {
+            setMessage('Error: Vehicle must have VIN or license plate to be inspected.');
+            return;
+        }
+        
+        // Make sure we have a proper Vehicle instance
+        if (startInspection && typeof startInspection === 'function') {
+            // Ensure we're passing a Vehicle instance
+            const vehicleToInspect = vehicle instanceof Vehicle 
+                ? vehicle 
+                : new Vehicle(vehicle.id, vehicle, vehicle.inspections);
+                
+            startInspection(vehicleToInspect, workOrderNumber);
+        } else {
+            console.warn('startInspection function not provided to InspectionForm');
+        }
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -55,6 +75,7 @@ const InspectionForm = () => {
           setName('');
           setSelectedCustomer('');
           setVehicles([new Vehicle(null, {})]);
+          setWorkOrderNumber('');
           
           // Clear message after 3 seconds
           setTimeout(() => setMessage(''), 3000);
@@ -62,7 +83,7 @@ const InspectionForm = () => {
           console.error('Error saving data:', error);
           setMessage('Error: Failed to save data.');
         }
-      };
+    };
 
     function copyVIN() {
         navigator.clipboard.writeText('1GDHG31U151174058 ')
@@ -92,6 +113,16 @@ const InspectionForm = () => {
                     setSelectedCustomer={setSelectedCustomer}    
                 />
 
+                <div className="form-group">
+                    <label>Work Order #:</label>
+                    <input
+                        type="text"
+                        value={workOrderNumber}
+                        onChange={(e) => setWorkOrderNumber(e.target.value)}
+                        placeholder="Enter work order number (optional)"
+                    />
+                </div>
+
                 <h3>Vehicles</h3>
                 {vehicles.map((vehicle, index) => (
                     <div key={index} className="vehicle-container">
@@ -102,7 +133,12 @@ const InspectionForm = () => {
                             setVehicles={setVehicles}
                             index={index}
                         />
-                        <button >
+                        <button 
+                            type="button"
+                            onClick={() => handleInspectVehicle(vehicle)}
+                            disabled={!vehicle.hasIdentifier()}
+                            className="inspect-btn"
+                        >
                             <strong>Inspect:</strong> {vehicle.getDisplayName()}
                         </button>
                     </div>
@@ -110,7 +146,7 @@ const InspectionForm = () => {
                 
                 <div className="form-actions">
                     <button type="submit" className="submit-btn">
-                        Save Inspection
+                        Save Customer & Vehicles
                     </button>
                 </div>
             </form>

@@ -1,9 +1,10 @@
+// src/models/Vehicle.js
 import { v4 as uuidv4 } from 'uuid';
 
 class Vehicle {
     constructor(id = uuidv4(), params = {}, inspections = []) {
       this.id = id;
-      this.inspections = inspections;
+      this.inspections = inspections || []; // Ensure it's always an array
       
       // Extract data from params object
       this.vin = params.vin || '';
@@ -35,21 +36,54 @@ class Vehicle {
       }
       return 'Unknown Vehicle';
     }
+    
+    // Add a new inspection to this vehicle
+    addInspection(inspection) {
+      if (!this.inspections) {
+        this.inspections = [];
+      }
+      this.inspections.push(inspection);
+      console.log(`Added inspection ${inspection.id} to vehicle ${this.id}`);
+      return inspection;
+    }
+    
+    // Get all inspections for this vehicle
+    getInspections() {
+      return this.inspections || [];
+    }
+    
+    // Get a specific inspection by ID
+    getInspection(inspectionId) {
+      if (!this.inspections) return null;
+      return this.inspections.find(inspection => inspection.id === inspectionId);
+    }
+    
+    // Get the most recent inspection
+    getLatestInspection() {
+      if (!this.inspections || this.inspections.length === 0) return null;
+      
+      // Sort inspections by date (newest first) and return the first one
+      return [...this.inspections].sort((a, b) => {
+        return new Date(b.date) - new Date(a.date);
+      })[0];
+    }
+    
+    // Convert to JSON for storage/transmission
+    toJSON() {
+      return {
+        id: this.id,
+        vin: this.vin,
+        plate: this.plate,
+        state: this.state,
+        make: this.make,
+        model: this.model,
+        year: this.year,
+        engine: this.engine,
+        inspections: this.inspections ? this.inspections.map(inspection => 
+          typeof inspection.toJSON === 'function' ? inspection.toJSON() : inspection
+        ) : []
+      };
+    }
   }
 
-  export default Vehicle 
-
-                        //   Examples
-//   // Create with VIN
-// const vehicle1 = new Vehicle(null, { vin: '1HGCM82633A004352' });
-
-// // Create with plate and state
-// const vehicle2 = new Vehicle(null, { plate: 'ABC123', state: 'CA' });
-
-// // Create with already-decoded info
-// const vehicle3 = new Vehicle(null, {
-//   vin: '1HGCM82633A004352',
-//   make: 'Honda',
-//   model: 'Accord',
-//   year: '2003'
-// });
+  export default Vehicle;

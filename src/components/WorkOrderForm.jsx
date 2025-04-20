@@ -1,7 +1,9 @@
+// src/components/WorkOrderForm.jsx
 import React, { useState, useEffect } from 'react';
 import DatabaseService from '../services/DatabaseService';
+import Vehicle from '../models/Vehicle';
 
-const WorkOrderForm = () => {
+const WorkOrderForm = ({ startInspection }) => {
   const [customers, setCustomers] = useState([]);
   const [selectedCustomer, setSelectedCustomer] = useState('');
   const [selectedVehicle, setSelectedVehicle] = useState('');
@@ -76,6 +78,41 @@ const WorkOrderForm = () => {
     }
   };
 
+  const handleInspect = () => {
+    if (!selectedVehicle || !selectedCustomer) {
+        setMessage('Error: Please select both a customer and a vehicle.');
+        return;
+    }
+    
+    const vehicle = customerVehicles.find(v => v.id === selectedVehicle);
+    
+    if (!vehicle) {
+        setMessage('Error: Selected vehicle not found.');
+        return;
+    }
+    
+    if (startInspection && typeof startInspection === 'function') {
+        // Create a proper Vehicle instance
+        const vehicleToInspect = new Vehicle(
+            vehicle.id,
+            {
+                vin: vehicle.vin || '',
+                plate: vehicle.plate || '',
+                state: vehicle.state || '',
+                make: vehicle.make || '',
+                model: vehicle.model || '',
+                year: vehicle.year || '',
+                engine: vehicle.engine || ''
+            },
+            vehicle.inspections || []
+        );
+        
+        startInspection(vehicleToInspect, workOrderNumber);
+    } else {
+        console.warn('startInspection function not provided to WorkOrderForm');
+    }
+};
+
   return (
     <div className="work-order-form">
       <h2>Create New Inspection</h2>
@@ -130,7 +167,17 @@ const WorkOrderForm = () => {
           </select>
         </div>
         
-        <button type="submit">New Inspection</button>
+        <div className="form-actions">
+          <button type="submit">Save Work Order</button>
+          <button 
+            type="button"
+            onClick={handleInspect}
+            disabled={!selectedVehicle}
+            className="inspect-btn"
+          >
+            Start Inspection
+          </button>
+        </div>
       </form>
     </div>
   );
