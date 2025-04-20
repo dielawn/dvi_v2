@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import './VehicleForm.css'
+import './VehicleForm.css';
 import Vehicle from '../models/Vehicle';
 import PlateToVin from './PlateToVin';
 import DecodeVin from './DecondeVin';
+
 
 const VehicleForm = ({ vehicle, vehicles, setVehicles, index }) => {
   // Local state to track changes before updating parent
@@ -13,7 +14,34 @@ const VehicleForm = ({ vehicle, vehicles, setVehicles, index }) => {
   // Update local state if the parent prop changes
   useEffect(() => {
     if (vehicleData) {
-      // setVehicles(vehicle);
+      // Create a proper Vehicle instance if it's just a plain object
+      if (!(vehicleData instanceof Vehicle)) {
+        console.log('Converting plain object to Vehicle instance');
+        
+        // Create a new Vehicle instance with the data
+        const vehicleInstance = new Vehicle(
+          null, // id is null until saved to database
+          vehicleData // pass the plain object as params
+        );
+        
+        // Update local state
+        setVehicleData(vehicleInstance);
+        
+        // Update parent state
+        if (setVehicles && vehicles) {
+          const updatedVehicles = [...vehicles];
+          updatedVehicles[index] = vehicleInstance;
+          setVehicles(updatedVehicles);
+          console.log('Updated vehicle in parent state:', vehicleInstance);
+        }
+      } else {
+        // If it's already a Vehicle instance, just update parent
+        if (setVehicles && vehicles) {
+          const updatedVehicles = [...vehicles];
+          updatedVehicles[index] = vehicleData;
+          setVehicles(updatedVehicles);
+        }
+      }
     }
   }, [vehicleData]);
 
@@ -180,19 +208,10 @@ const VehicleForm = ({ vehicle, vehicles, setVehicles, index }) => {
           </button>
         )}
         
-        {isLastVehicle && (
-          <button type="button" className="add-btn" onClick={handleAddVehicle}>
-            Add Another Vehicle
-          </button>
-        )}
+
       </div>
 
-      {/* Display name preview if we have enough data */}
-      {(vehicleData.make || vehicleData.model || vehicleData.year || vehicleData.vin || vehicleData.plate) && (
-        <div className="vehicle-preview">
-          {/* <strong>Preview:</strong> {vehicleData.getDisplayName()} */}
-        </div>
-      )}
+    
     </div>
   );
 };

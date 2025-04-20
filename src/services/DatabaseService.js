@@ -38,6 +38,21 @@ class DatabaseService {
       // Create a new customer
       async createCustomer(customerData) {
         try {
+           // First check if a customer with this name already exists
+          const existingCustomers = await this.getCustomers();
+          const duplicate = existingCustomers.find(
+            customer => customer.name.toLowerCase() === customerData.name.toLowerCase()
+          );
+
+          if (duplicate) {
+            // Return the existing customer or throw an error
+            return { 
+              success: false, 
+              message: 'Customer already exists', 
+              existingCustomer: duplicate 
+            };
+          }
+
           const response = await fetch(`${this.apiBaseUrl}/customers.php`, {
             method: 'POST',
             headers: {
@@ -91,6 +106,28 @@ class DatabaseService {
           return data;
         } catch (error) {
           console.error('Error fetching work orders:', error);
+          throw error;
+        }
+      }
+
+      // Add to DatabaseService.js
+      async addVehiclesToCustomer(customerId, vehicles) {
+        try {
+          const response = await fetch(`${this.apiBaseUrl}/customers.php?id=${customerId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ vehicles }),
+          });
+          if (!response.ok) {
+            throw new Error(`HTTP error ${response.status}`);
+          }
+          const data = await response.json();
+          console.log('Added vehicles to customer:', data);
+          return data;
+        } catch (error) {
+          console.error('Error adding vehicles to customer:', error);
           throw error;
         }
       }

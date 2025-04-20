@@ -6,6 +6,7 @@ import Vehicle from '../models/Vehicle';
 
 const InspectionForm = () => {
     const [name, setName] = useState('');
+    const [selectedCustomer, setSelectedCustomer] = useState('');
     const [vehicles, setVehicles] = useState([new Vehicle(null, {})]);
     const [message, setMessage] = useState('');
 
@@ -30,29 +31,38 @@ const InspectionForm = () => {
             return;
           }
           
-          const customerData = {
-            name,
-            vehicles: validVehicles,
-          };
-          
-          console.log('Submitting customer data:', customerData);
-          const result = await dbService.createCustomer(customerData);
-          console.log('Customer saved:', result);
-          
-          // Show success message
-          setMessage('Customer added successfully!');
+          // If we're using an existing customer
+          if (selectedCustomer) {
+            // Handle adding vehicles to existing customer
+            // You'd need to implement this in your DatabaseService
+            const result = await dbService.addVehiclesToCustomer(selectedCustomer, validVehicles);
+            console.log('Vehicles added to existing customer:', result);
+            setMessage('Vehicles added to customer successfully!');
+          } else {
+            // Create new customer with vehicles
+            const customerData = {
+              name,
+              vehicles: validVehicles,
+            };
+            
+            console.log('Submitting customer data:', customerData);
+            const result = await dbService.createCustomer(customerData);
+            console.log('Customer saved:', result);
+            setMessage('Customer added successfully!');
+          }
           
           // Reset form
           setName('');
+          setSelectedCustomer('');
           setVehicles([new Vehicle(null, {})]);
           
           // Clear message after 3 seconds
           setTimeout(() => setMessage(''), 3000);
         } catch (error) {
-          console.error('Error saving customer:', error);
-          setMessage('Error: Failed to add customer.');
+          console.error('Error saving data:', error);
+          setMessage('Error: Failed to save data.');
         }
-    };
+      };
 
     function copyVIN() {
         navigator.clipboard.writeText('1GDHG31U151174058 ')
@@ -75,25 +85,32 @@ const InspectionForm = () => {
             )}
             
             <form onSubmit={handleSubmit}>
-                <CustomerForm name={name} setName={setName} />
+                <CustomerForm 
+                    name={name} 
+                    setName={setName}
+                    selectedCustomer={selectedCustomer}
+                    setSelectedCustomer={setSelectedCustomer}    
+                />
 
                 <h3>Vehicles</h3>
                 {vehicles.map((vehicle, index) => (
                     <div key={index} className="vehicle-container">
                         {index > 0 && <hr />}
-                        <h4>Vehicle {index + 1}</h4>
                         <VehicleForm
                             vehicle={vehicle}
                             vehicles={vehicles}
                             setVehicles={setVehicles}
                             index={index}
                         />
+                        <button >
+                            <strong>Inspect:</strong> {vehicle.getDisplayName()}
+                        </button>
                     </div>
                 ))}
                 
                 <div className="form-actions">
                     <button type="submit" className="submit-btn">
-                        Save Customer & Create Inspection
+                        Save Inspection
                     </button>
                 </div>
             </form>

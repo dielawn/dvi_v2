@@ -1,5 +1,7 @@
+import { v4 as uuidv4 } from 'uuid';
+
 class Vehicle {
-    constructor(id, params = {}, inspections = []) {
+    constructor(id = uuidv4(), params = {}, inspections = []) {
       this.id = id;
       this.inspections = inspections;
       

@@ -170,3 +170,65 @@
     margin-right: 6px;
     max-width: 175px;
   }
+
+/* Add to VehicleForm.css or create a new CustomerForm.css */
+.customer-suggestions {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #f8f9fa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.customer-suggestions p {
+  margin-top: 0;
+  margin-bottom: 8px;
+  font-weight: bold;
+}
+
+.customer-suggestions ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.customer-suggestions li {
+  margin-bottom: 5px;
+}
+
+.customer-suggestions button {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  padding: 2px 5px;
+  text-align: left;
+  width: 100%;
+}
+
+.customer-suggestions button:hover {
+  background-color: #e9ecef;
+  border-radius: 4px;
+}
+
+.selected-customer-info {
+  margin-top: 10px;
+  padding: 10px;
+  background-color: #e8f4fd;
+  border-left: 3px solid #007bff;
+  border-radius: 3px;
+}
+
+.clear-selection-btn {
+  background-color: #6c757d;
+  color: white;
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-top: 8px;
+}
+
+.clear-selection-btn:hover {
+  background-color: #5a6268;
+}

@@ -56,12 +56,12 @@ const WorkOrderForm = () => {
         vehicleId: selectedVehicle,
       };
       
-      console.log('Creating work order:', workOrderData);
+      console.log('Creating inspection:', workOrderData);
       const result = await dbService.createWorkOrder(workOrderData);
-      console.log('Work order created:', result);
+      console.log('Inspection created:', result);
       
       // Show success message
-      setMessage('Work order created successfully!');
+      setMessage('Inspection created successfully!');
       
       // Reset form
       setWorkOrderNumber('');
@@ -72,13 +72,13 @@ const WorkOrderForm = () => {
       setTimeout(() => setMessage(''), 3000);
     } catch (error) {
       console.error('Error creating work order:', error);
-      setMessage('Error: Failed to create work order.');
+      setMessage('Error: Failed to create new inspection.');
     }
   };
 
   return (
     <div className="work-order-form">
-      <h2>Create Work Order</h2>
+      <h2>Create New Inspection</h2>
       
       {message && (
         <div className={message.includes('Error') ? 'error-message' : 'success-message'}>
@@ -130,7 +130,7 @@ const WorkOrderForm = () => {
           </select>
         </div>
         
-        <button type="submit">Create Work Order</button>
+        <button type="submit">New Inspection</button>
       </form>
     </div>
   );
