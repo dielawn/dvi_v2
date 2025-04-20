@@ -93,20 +93,28 @@ function createCustomer($data) {
         
         $customerId = $conn->lastInsertId();
         
-        // Insert vehicles if provided
+        // Adjust the vehicle insert query
         if(isset($data['vehicles']) && is_array($data['vehicles'])) {
             foreach($data['vehicles'] as $vehicle) {
-                if(isset($vehicle['make']) && isset($vehicle['model']) && isset($vehicle['year'])) {
-                    $vehicleQuery = "INSERT INTO vehicles (customer_id, make, model, year, vin) VALUES (?, ?, ?, ?, ?)";
-                    $vehicleStmt = $conn->prepare($vehicleQuery);
-                    $vehicleStmt->execute([
-                        $customerId,
-                        $vehicle['make'],
-                        $vehicle['model'],
-                        $vehicle['year'],
-                        $vehicle['vin'] ?? ''
-                    ]);
-                }
+                $vehicleQuery = "INSERT INTO vehicles (
+                    customer_id, make, model, year, vin, 
+                    plate, state, engine,
+                ) VALUES (
+                    ?, ?, ?, ?, ?, 
+                    ?, ?, ?, ?, 
+                    ?, ?
+                )";
+                $vehicleStmt = $conn->prepare($vehicleQuery);
+                $vehicleStmt->execute([
+                    $customerId,
+                    $vehicle['make'] ?? '',
+                    $vehicle['model'] ?? '',
+                    $vehicle['year'] ?? '',
+                    $vehicle['vin'] ?? '',
+                    $vehicle['plate'] ?? '',
+                    $vehicle['state'] ?? '',
+                    $vehicle['engine'] ?? ''
+                ]);
             }
         }
         
@@ -121,34 +129,7 @@ function createCustomer($data) {
         echo json_encode(['error' => 'Failed to create customer: ' . $e->getMessage()]);
     }
 }
-// Adjust the vehicle insert query
-if(isset($data['vehicles']) && is_array($data['vehicles'])) {
-    foreach($data['vehicles'] as $vehicle) {
-        $vehicleQuery = "INSERT INTO vehicles (
-            customer_id, make, model, year, vin, 
-            plate, state, engine, transmission, 
-            body_type, trim
-        ) VALUES (
-            ?, ?, ?, ?, ?, 
-            ?, ?, ?, ?, 
-            ?, ?
-        )";
-        $vehicleStmt = $conn->prepare($vehicleQuery);
-        $vehicleStmt->execute([
-            $customerId,
-            $vehicle['make'] ?? '',
-            $vehicle['model'] ?? '',
-            $vehicle['year'] ?? '',
-            $vehicle['vin'] ?? '',
-            $vehicle['plate'] ?? '',
-            $vehicle['state'] ?? '',
-            $vehicle['engine'] ?? '',
-            $vehicle['transmission'] ?? '',
-            $vehicle['bodyType'] ?? '',
-            $vehicle['trim'] ?? ''
-        ]);
-    }
-}
+
 
 ?>
 // Inside your createCustomer function in customers.php
