@@ -16,6 +16,216 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 // Database connection
 require_once 'config.php';
 
+// Helper function to process inspections
+function processInspections($inspections, $conn) {
+    foreach ($inspections as &$inspection) {
+        // Convert stored JSON items back to an array
+        $inspection['items'] = json_decode($inspection['items'], true);
+        
+        // Calculate status summary
+        $statusSummary = array(
+            'Good' => 0,
+            'Needs Attention' => 0,
+            'Safety Concern' => 0,
+            'N/A' => 0
+        );
+        
+        if ($inspection['items']) {
+            foreach ($inspection['items'] as $item) {
+                if (isset($item['status']) && array_key_exists($item['status'], $statusSummary)) {
+                    $statusSummary[$item['status']]++;
+                }
+            }
+        }
+        
+        $inspection['status_summary'] = $statusSummary;
+        
+        // Get vehicle info
+        if (isset($inspection['vehicle_id'])) {
+            $vehicleSql = "SELECT make, model, year FROM vehicles WHERE id = ?";
+            $vehicleStmt = $conn->prepare($vehicleSql);
+            $vehicleStmt->execute([$inspection['vehicle_id']]);
+            $vehicle = $vehicleStmt->fetch(PDO::FETCH_ASSOC);
+            
+            if ($vehicle) {
+                $inspection['vehicle_info'] = $vehicle;
+            }
+        }
+    }
+    
+    return $inspections;
+}
+
+// GET request - Retrieve inspections
+if ($_SERVER['REQUEST_METHOD'] === 'GET') {
+    // Search by Work Order Number
+    if (isset($_GET['workOrder'])) {
+        $workOrder = $_GET['workOrder'];
+        
+        // Prepare SQL query to get inspections with a specific work order number
+        $sql = "SELECT * FROM inspections WHERE work_order = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$workOrder]);
+        
+        // Fetch all matching inspections
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process inspections
+        $inspections = processInspections($inspections, $conn);
+        
+        // Return inspections as JSON
+        echo json_encode($inspections);
+        exit();
+    }
+    
+    // Search by Customer ID
+    if (isset($_GET['customerId'])) {
+        $customerId = $_GET['customerId'];
+        
+        // Prepare SQL query to get all vehicles for this customer
+        $vehiclesSql = "SELECT id FROM vehicles WHERE customer_id = ?";
+        $vehiclesStmt = $conn->prepare($vehiclesSql);
+        $vehiclesStmt->execute([$customerId]);
+        $vehicleIds = $vehiclesStmt->fetchAll(PDO::FETCH_COLUMN);
+        
+        if (empty($vehicleIds)) {
+            // No vehicles found for this customer
+            echo json_encode([]);
+            exit();
+        }
+        
+        // Prepare placeholders for IN clause
+        $placeholders = str_repeat('?,', count($vehicleIds) - 1) . '?';
+        
+        // Prepare SQL query to get inspections for these vehicles
+        $sql = "SELECT * FROM inspections WHERE vehicle_id IN ($placeholders)";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute($vehicleIds);
+        
+        // Fetch all matching inspections
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process inspections
+        $inspections = processInspections($inspections, $conn);
+        
+        // Return inspections as JSON
+        echo json_encode($inspections);
+        exit();
+    }
+    
+    // Search by Date Range
+    if (isset($_GET['startDate'])) {
+        $startDate = $_GET['startDate'] . ' 00:00:00';
+        $endDate = isset($_GET['endDate']) ? $_GET['endDate'] . ' 23:59:59' : $startDate . ' 23:59:59';
+        
+        // Prepare SQL query to get inspections within date range
+        $sql = "SELECT * FROM inspections WHERE date BETWEEN ? AND ? ORDER BY date DESC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$startDate, $endDate]);
+        
+        // Fetch all matching inspections
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process inspections
+        $inspections = processInspections($inspections, $conn);
+        
+        // Return inspections as JSON
+        echo json_encode($inspections);
+        exit();
+    }
+    
+    // Search by Technician ID
+    if (isset($_GET['technicianId'])) {
+        $technicianId = $_GET['technicianId'];
+        
+        // Prepare SQL query to get inspections by a specific technician
+        $sql = "SELECT * FROM inspections WHERE technician_id = ? ORDER BY date DESC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$technicianId]);
+        
+        // Fetch all matching inspections
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process inspections
+        $inspections = processInspections($inspections, $conn);
+        
+        // Return inspections as JSON
+        echo json_encode($inspections);
+        exit();
+    }
+    
+    // Check if vehicle ID is provided
+    if (isset($_GET['vehicleId'])) {
+        $vehicleId = $_GET['vehicleId'];
+        
+        // Prepare SQL query to get inspections for a specific vehicle
+        $sql = "SELECT * FROM inspections WHERE vehicle_id = ? ORDER BY date DESC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$vehicleId]);
+        
+        // Fetch all inspections
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process inspections
+        $inspections = processInspections($inspections, $conn);
+        
+        // Return inspections as JSON
+        echo json_encode($inspections);
+        exit();
+    } 
+    // Check if inspection ID is provided
+    else if (isset($_GET['id'])) {
+        $inspectionId = $_GET['id'];
+        
+        // Prepare SQL query to get a specific inspection
+        $sql = "SELECT * FROM inspections WHERE id = ?";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute([$inspectionId]);
+        
+        if ($stmt->rowCount() > 0) {
+            $inspection = $stmt->fetch(PDO::FETCH_ASSOC);
+            
+            // Convert stored JSON items back to an array
+            $inspection['items'] = json_decode($inspection['items'], true);
+            
+            // Get vehicle info
+            if (isset($inspection['vehicle_id'])) {
+                $vehicleSql = "SELECT make, model, year FROM vehicles WHERE id = ?";
+                $vehicleStmt = $conn->prepare($vehicleSql);
+                $vehicleStmt->execute([$inspection['vehicle_id']]);
+                $vehicle = $vehicleStmt->fetch(PDO::FETCH_ASSOC);
+                
+                if ($vehicle) {
+                    $inspection['vehicle_info'] = $vehicle;
+                }
+            }
+            
+            echo json_encode($inspection);
+        } else {
+            http_response_code(404);
+            echo json_encode(["error" => "Inspection not found"]);
+        }
+        exit();
+    }
+    // Return all inspections if no specific parameters provided
+    else {
+        // Prepare SQL query to get all inspections
+        $sql = "SELECT * FROM inspections ORDER BY date DESC";
+        $stmt = $conn->prepare($sql);
+        $stmt->execute();
+        
+        // Fetch all inspections
+        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        // Process inspections
+        $inspections = processInspections($inspections, $conn);
+        
+        // Return inspections as JSON
+        echo json_encode($inspections);
+        exit();
+    }
+}
+
 // POST request - Create a new inspection
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Get request body
@@ -47,10 +257,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Convert items array to JSON string for storage
     $items = json_encode($data['items']);
-    
-    // Check if your database table has these columns
-    // inspections table should have: id, vehicle_id, technician_id, date, work_order, items
-    // If they're named differently, adjust the query below
     
     try {
         // First, let's check if an inspection with this ID already exists
@@ -119,68 +325,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         // Log the error
         error_log('Error: ' . $e->getMessage());
-    }
-    exit();
-}
-
-// GET request - Retrieve inspections
-if ($_SERVER['REQUEST_METHOD'] === 'GET') {
-    // Check if vehicle ID is provided
-    if (isset($_GET['vehicleId'])) {
-        $vehicleId = $_GET['vehicleId'];
-        
-        // Prepare SQL query to get inspections for a specific vehicle
-        $sql = "SELECT * FROM inspections WHERE vehicle_id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$vehicleId]);
-        
-        // Fetch all inspections
-        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Convert stored JSON items back to an array for each inspection
-        foreach ($inspections as &$inspection) {
-            $inspection['items'] = json_decode($inspection['items'], true);
-        }
-        
-        // Return inspections as JSON
-        echo json_encode($inspections);
-    } 
-    // Check if inspection ID is provided
-    else if (isset($_GET['id'])) {
-        $inspectionId = $_GET['id'];
-        
-        // Prepare SQL query to get a specific inspection
-        $sql = "SELECT * FROM inspections WHERE id = ?";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute([$inspectionId]);
-        
-        if ($stmt->rowCount() > 0) {
-            $inspection = $stmt->fetch(PDO::FETCH_ASSOC);
-            // Convert stored JSON items back to an array
-            $inspection['items'] = json_decode($inspection['items'], true);
-            echo json_encode($inspection);
-        } else {
-            http_response_code(404);
-            echo json_encode(["error" => "Inspection not found"]);
-        }
-    }
-    // Return all inspections if no specific ID provided
-    else {
-        // Prepare SQL query to get all inspections
-        $sql = "SELECT * FROM inspections ORDER BY date DESC";
-        $stmt = $conn->prepare($sql);
-        $stmt->execute();
-        
-        // Fetch all inspections
-        $inspections = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        
-        // Convert stored JSON items back to an array for each inspection
-        foreach ($inspections as &$inspection) {
-            $inspection['items'] = json_decode($inspection['items'], true);
-        }
-        
-        // Return inspections as JSON
-        echo json_encode($inspections);
     }
     exit();
 }

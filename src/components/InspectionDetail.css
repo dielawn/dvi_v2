@@ -1,0 +1,212 @@
+/* InspectionDetail.css */
+.inspection-detail {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 20px;
+    background-color: #fff;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+    font-family: Arial, sans-serif;
+  }
+  
+  .inspection-actions {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 20px;
+  }
+  
+  .back-btn,
+  .print-btn {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+  }
+  
+  .back-btn {
+    background-color: #6c757d;
+    color: white;
+  }
+  
+  .print-btn {
+    background-color: #007bff;
+    color: white;
+  }
+  
+  .inspection-header {
+    border-bottom: 2px solid #ddd;
+    padding-bottom: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .inspection-header h1 {
+    margin: 0 0 15px 0;
+    color: #333;
+    font-size: 24px;
+  }
+  
+  .inspection-meta {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+  }
+  
+  .customer-info,
+  .vehicle-info {
+    margin-bottom: 20px;
+    padding: 15px;
+    background-color: #f9f9f9;
+    border-radius: 5px;
+  }
+  
+  .customer-info h2,
+  .vehicle-info h2,
+  .inspection-summary h2,
+  .inspection-items h2 {
+    margin-top: 0;
+    font-size: 18px;
+    color: #333;
+  }
+  
+  .info-row {
+    margin-bottom: 8px;
+  }
+  
+  .status-counts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  
+  .status-badge {
+    padding: 5px 10px;
+    border-radius: 20px;
+    font-size: 14px;
+    font-weight: 500;
+  }
+  
+  .status-good {
+    background-color: #d4edda;
+    color: #155724;
+  }
+  
+  .status-needs-attention {
+    background-color: #fff3cd;
+    color: #856404;
+  }
+  
+  .status-safety-concern {
+    background-color: #f8d7da;
+    color: #721c24;
+  }
+  
+  .status-n-a {
+    background-color: #e2e3e5;
+    color: #383d41;
+  }
+  
+  .items-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 20px;
+  }
+  
+  .items-table th,
+  .items-table td {
+    padding: 10px;
+    text-align: left;
+    border-bottom: 1px solid #ddd;
+  }
+  
+  .items-table th {
+    background-color: #f2f2f2;
+    font-weight: bold;
+  }
+  
+  .items-table tr:last-child td {
+    border-bottom: none;
+  }
+  
+  .items-table tr.status-good {
+    background-color: rgba(40, 167, 69, 0.1);
+  }
+  
+  .items-table tr.status-needs-attention {
+    background-color: rgba(255, 193, 7, 0.1);
+  }
+  
+  .items-table tr.status-safety-concern {
+    background-color: rgba(220, 53, 69, 0.1);
+  }
+  
+  .items-table tr.status-n-a {
+    background-color: rgba(108, 117, 125, 0.1);
+  }
+  
+  .signature-area {
+    margin-top: 30px;
+    padding-top: 20px;
+    border-top: 1px solid #ddd;
+  }
+  
+  .signature-box {
+    margin-top: 20px;
+  }
+  
+  .signature-line {
+    height: 40px;
+    border-bottom: 1px solid #333;
+    margin-top: 10px;
+    font-style: italic;
+    display: flex;
+    align-items: flex-end;
+    padding-bottom: 5px;
+  }
+  
+  .loading,
+  .error-message {
+    padding: 20px;
+    text-align: center;
+    margin: 20px 0;
+  }
+  
+  .loading {
+    color: #007bff;
+  }
+  
+  .error-message {
+    color: #dc3545;
+    background-color: #f8d7da;
+    border-radius: 4px;
+  }
+  
+  /* Print styles */
+  @media print {
+    body {
+      background-color: #fff;
+    }
+    
+    .inspection-detail {
+      box-shadow: none;
+      max-width: 100%;
+      padding: 0;
+    }
+    
+    .non-printable {
+      display: none !important;
+    }
+    
+    .inspection-header,
+    .customer-info,
+    .vehicle-info,
+    .inspection-summary,
+    .inspection-items,
+    .signature-area {
+      page-break-inside: avoid;
+    }
+    
+    .items-table {
+      font-size: 12px;
+    }
+  }

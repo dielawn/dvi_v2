@@ -1,11 +1,32 @@
 import React, { useState } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import InspectionForm from './components/InspectionForm';
 import WorkOrderForm from './components/WorkOrderForm';
+import InspectionSearch from './components/InspectionSearch';
+import InspectionDetail from './components/InspectionDetail';
 import DVI from './components/DVI';
-import Vehicle from './models/Vehicle';
 import './App.css';
 
 function App() {
+  // Main app container with routing
+  return (
+    <Router>
+      <Routes>
+        {/* Main route with nested routes for tabs */}
+        <Route path="/" element={<MainApp />} />
+        
+        {/* Inspection detail route */}
+        <Route path="/inspection/:id" element={<InspectionDetail />} />
+        
+        {/* Redirect any unknown routes to home */}
+        <Route path="*" element={<Navigate to="/" />} />
+      </Routes>
+    </Router>
+  );
+}
+
+// Main application component with tabs
+function MainApp() {
   const [activeTab, setActiveTab] = useState('customer');
   const [inspectionMode, setInspectionMode] = useState(false);
   const [selectedVehicle, setSelectedVehicle] = useState(null);
@@ -83,8 +104,10 @@ function App() {
         ) : (
           activeTab === 'customer' ? (
             <InspectionForm startInspection={handleStartInspection} />
-          ) : (
+          ) : activeTab === 'inspection' ? (
             <WorkOrderForm startInspection={handleStartInspection} />
+          ) : (
+            <InspectionSearch startInspection={handleStartInspection} />
           )
         )}
       </main>
